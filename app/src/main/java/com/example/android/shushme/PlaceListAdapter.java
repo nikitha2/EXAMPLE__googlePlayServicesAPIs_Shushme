@@ -83,6 +83,8 @@ public class PlaceListAdapter extends RecyclerView.Adapter {
 
     @Override
     public int getItemCount() {
+        if(allTaskEntries==null)
+            return 0;
         return allTaskEntries.size();
     }
 

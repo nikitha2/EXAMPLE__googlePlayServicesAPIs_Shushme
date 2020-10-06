@@ -37,4 +37,8 @@ import java.util.List;
         public void insertTasks(ListItemsEntity taskEntry) {
             tasksRepository.insertTasks(taskEntry);
         }
+
+        public void fetchPlacesbyId(String placeId) {
+            tasksRepository.fetchPlacesbyId(placeId);
+        }
     }

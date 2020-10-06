@@ -25,7 +25,12 @@ public class ListItemsEntity {
         this.placeID = placeID;
     }
 
-
+    @Ignore
+    public ListItemsEntity(String placeID,String placeName,String placeAddress) {
+        this.placeID = placeID;
+        this.placeName= placeName;
+        this.placeAddress=placeAddress;
+    }
 
 
 

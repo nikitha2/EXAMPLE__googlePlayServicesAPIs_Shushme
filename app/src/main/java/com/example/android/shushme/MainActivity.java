@@ -89,6 +89,7 @@ public class MainActivity extends AppCompatActivity implements ActivityCompat.On
         mRecyclerView = (RecyclerView) findViewById(R.id.places_list_recycler_view);
         mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
 
+
         mAdapter = new PlaceListAdapter(this,taskEntriesAll, this);
         mRecyclerView.setAdapter(mAdapter);
 
@@ -121,6 +122,11 @@ public class MainActivity extends AppCompatActivity implements ActivityCompat.On
 
         // Create a new PlacesClient instance
         placesClient = Places.createClient(this);
+
+//        viewModel.insertTasks(new ListItemsEntity( "placeID1", "placeName1", "placeAddress1") );
+//        viewModel.insertTasks(new ListItemsEntity( "placeID2", "placeName2", "placeAddress2") );
+//        viewModel.insertTasks(new ListItemsEntity( "placeID3", "placeName3", "placeAddress3") );
+//        viewModel.insertTasks(new ListItemsEntity( "placeID4", "placeName4", "placeAddress4") );
     }
 
     public void onAddNewLocation(View view){
@@ -211,6 +217,7 @@ public class MainActivity extends AppCompatActivity implements ActivityCompat.On
 
                     ListItemsEntity lie=new ListItemsEntity(place.getId());
                     lie= refreshPlacesData(place.getId(),lie);
+                    Log.i(TAG, "3. Place ID|name|address: " + lie.getPlaceID()+" |"+lie.getPlaceName()+" | "+lie.getPlaceAddress());
                     viewModel.insertTasks(lie);
                 }
             }
@@ -266,20 +273,22 @@ public class MainActivity extends AppCompatActivity implements ActivityCompat.On
 // Construct a request object, passing the place ID and fields array.
         final FetchPlaceRequest request = FetchPlaceRequest.newInstance(placeId, placeFields);
 
-        placesClient.fetchPlace(request).addOnSuccessListener((response) -> {
-            Place place = response.getPlace();
-            Log.i(TAG, "Place found: " + place.getName());
-            listItemsEntity.setPlaceAddress(place.getAddress());
-            listItemsEntity.setPlaceName(place.getName());
-        }).addOnFailureListener((exception) -> {
-            if (exception instanceof ApiException) {
-                final ApiException apiException = (ApiException) exception;
-                Log.e(TAG, "Place not found: " + exception.getMessage());
-                final int statusCode = apiException.getStatusCode();
-                // TODO: Handle error with given status code.
-            }
-        });
+//        placesClient.fetchPlace(request).addOnSuccessListener((response) -> {
+//            Place place = response.getPlace();
+//            Log.i(TAG, "Place found: " + place.getName());
+//            listItemsEntity.setPlaceAddress(place.getAddress());
+//            listItemsEntity.setPlaceName(place.getName());
+//        }).addOnFailureListener((exception) -> {
+//            if (exception instanceof ApiException) {
+//                final ApiException apiException = (ApiException) exception;
+//                Log.e(TAG, "Place not found: " + exception.getMessage());
+//                final int statusCode = apiException.getStatusCode();
+//                // TODO: Handle error with given status code.
+//            }
+//        });
 
+    //}
+        viewModel.fetchPlacesbyId(placeId);
         Log.i(TAG, "2. Place ID: " + listItemsEntity.getPlaceID());
         Log.i(TAG, "2. Place found: " + listItemsEntity.getPlaceName());
         Log.i(TAG, "2. Address found: " + listItemsEntity.getPlaceAddress());

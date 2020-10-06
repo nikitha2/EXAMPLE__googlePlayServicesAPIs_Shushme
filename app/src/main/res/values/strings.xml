@@ -10,7 +10,7 @@
 
     <string name="API_KEY">AIzaSyBULrgQ9hEpw9syljf-VToZ-sm-pHUxYxo</string>
     <string name="noPlaceSelected">No Place Selected</string>
-
+    <string name="ReturnFieldsFromAPI">name,formatted_address</string>
 
     <string name="location_permission_denied">permission to access location denied. permission is required for this funtionality</string>
     <string name="location_permission_needed">Permission to access location is required for this funtionality</string>
