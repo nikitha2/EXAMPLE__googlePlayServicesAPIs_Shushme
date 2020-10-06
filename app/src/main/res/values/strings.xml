@@ -8,10 +8,12 @@
     <string name="enable_location">Location Permission</string>
     <string name="enable_rington">Ringtone Permission</string>
 
-    <string name="API_KEY">AIzaSyB_SXhcljAru_ADEgKqpuDKfRgdN6mMyGI</string>
+    <string name="API_KEY">AIzaSyBULrgQ9hEpw9syljf-VToZ-sm-pHUxYxo</string>
+    <string name="noPlaceSelected">No Place Selected</string>
+
 
     <string name="location_permission_denied">permission to access location denied. permission is required for this funtionality</string>
-
+    <string name="location_permission_needed">Permission to access location is required for this funtionality</string>
 
     <string name="need_location_permission_message">You need to enable location permissions first</string>
     <string name="location_permissions_granted_message">Location Permissions Granted</string>

@@ -11,6 +11,9 @@ public class ListItemsEntity {
     @PrimaryKey(autoGenerate = true)
     private int id;
     private String placeID;
+    private String placeName;
+    private String placeAddress;
+
 
     public ListItemsEntity(String placeID) {
         this.placeID = placeID;
@@ -21,6 +24,10 @@ public class ListItemsEntity {
         this.id = id;
         this.placeID = placeID;
     }
+
+
+
+
 
     public int getId() {
         return id;
@@ -37,5 +44,22 @@ public class ListItemsEntity {
     public void setPlaceID(String placeID) {
         this.placeID = placeID;
     }
+
+    public String getPlaceName() {
+        return placeName;
+    }
+
+    public void setPlaceName(String placeName) {
+        this.placeName = placeName;
+    }
+
+    public String getPlaceAddress() {
+        return placeAddress;
+    }
+
+    public void setPlaceAddress(String placeAddress) {
+        this.placeAddress = placeAddress;
+    }
+
 
 }

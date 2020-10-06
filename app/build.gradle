@@ -17,6 +17,10 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
 }
 
 dependencies {
@@ -34,7 +38,7 @@ dependencies {
 //    implementation 'com.google.android.gms:play-services-location:29.0.2'
     implementation 'com.google.android.gms:play-services-location:17.1.0'
 
-    implementation "android.arch.lifecycle:extensions:1.1.1"
+    implementation 'androidx.lifecycle:lifecycle-extensions:2.0.0'
     annotationProcessor "androidx.lifecycle:lifecycle-common-java8:2.2.0"
     annotationProcessor 'androidx.room:room-compiler:2.2.5'
 
