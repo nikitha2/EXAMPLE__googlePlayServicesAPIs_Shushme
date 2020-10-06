@@ -14,8 +14,7 @@ import retrofit2.Retrofit;
 
 public class TasksRepository {
 
-    private static final String LOG_TAG = TasksRepository.class
-            .getSimpleName();
+    private static final String LOG_TAG = TasksRepository.class.getSimpleName();
     private LiveData<List<ListItemsEntity>> tasks;
     private TaskDao taskDao;
     AppDatabase database;
