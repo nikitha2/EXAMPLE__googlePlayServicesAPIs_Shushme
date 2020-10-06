@@ -1,6 +1,5 @@
 package com.example.android.shushme.Retrofit;
 
-import androidx.room.Ignore;
 
 import com.example.android.shushme.room.ListItemsEntity;
 
