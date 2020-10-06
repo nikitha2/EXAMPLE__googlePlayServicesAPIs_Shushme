@@ -97,13 +97,14 @@
                 />
 
             <CheckBox
-                android:id="@+id/enable_rington"
+                android:id="@+id/ringer_permissions_checkbox"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:layout_gravity="center"
                 android:text="@string/enable_rington"
                 android:layoutDirection="rtl"
                 android:layout_marginRight="@dimen/activity_vertical_margin_right"
+                android:onClick="onRingerPermissionsClicked"
                 android:textAppearance="@style/TextAppearance.AppCompat.Medium" />
         </LinearLayout>
 

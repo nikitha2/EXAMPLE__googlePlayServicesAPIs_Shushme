@@ -16,8 +16,10 @@ import retrofit2.Callback;
 import retrofit2.Response;
 import retrofit2.Retrofit;
 
-public class TasksRepository {
+import static com.example.android.shushme.MainActivity.API_KEY;
 
+public class TasksRepository {
+    static String fields = "name,formatted_address";
     private static final String LOG_TAG = TasksRepository.class.getSimpleName();
     private LiveData<List<ListItemsEntity>> tasks;
     private TaskDao taskDao;
@@ -55,17 +57,23 @@ public class TasksRepository {
         database.taskDao().updateTask(task);
     }
 
-    public void fetchPlacesbyId(String placeId) {
+    public void fetchPlacesbyId(String placeId,MainViewModel viewModel) {
         Retrofit retrofit = RetrofitClientInstance.getRetrofitInstance();
         GetPlacesService service = retrofit.create(GetPlacesService.class);
-        Call<ListItemsEntityResult> call = service.getListItemsEntityById(placeId, String.valueOf(R.string.API_KEY), String.valueOf(R.string.ReturnFieldsFromAPI));
+
+        Call<ListItemsEntityResult> call = service.getListItemsEntityById(placeId, fields, API_KEY);
 
         final MutableLiveData<ListItemsEntity> listItemsEntity = new MutableLiveData<>();
         call.enqueue(new Callback<ListItemsEntityResult>() {
             @Override
             public void onResponse(Call<ListItemsEntityResult> call, Response<ListItemsEntityResult> response) {
                 ListItemsEntityResult body = response.body();
-                listItemsEntity.setValue(body.getResults());
+                List<ListItemsEntity> result = body.getResults();
+                //listItemsEntity.setValue(body.getResults());
+                String message = response.message();
+                String res = response.toString();
+                
+                viewModel.insertTasks(new ListItemsEntity(placeId,result.get(0).getPlaceName(),result.get(0).getPlaceAddress()));
             }
 
             @Override
@@ -74,5 +82,6 @@ public class TasksRepository {
                 listItemsEntity.setValue(null);
             }
         });
+
     }
 }

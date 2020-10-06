@@ -5,6 +5,8 @@ import androidx.room.Entity;
 import androidx.room.Ignore;
 import androidx.room.PrimaryKey;
 
+import com.google.android.gms.maps.model.LatLng;
+
 import java.util.List;
 
 @Entity(tableName = "places")
@@ -15,6 +17,7 @@ public class ListItemsEntity {
     private String placeID;
     private String placeName;
     private String placeAddress;
+    private String placeLAT_LNG;
     public ListItemsEntity(String placeID) {
         this.placeID = placeID;
     }
@@ -66,6 +69,13 @@ public class ListItemsEntity {
         this.placeAddress = placeAddress;
     }
 
+    public String getPlaceLAT_LNG() {
+        return placeLAT_LNG;
+    }
+
+    public void setPlaceLAT_LNG(String placeLAT_LNG) {
+        this.placeLAT_LNG = placeLAT_LNG;
+    }
 
 
 }

@@ -8,7 +8,7 @@ import androidx.room.RoomDatabase;
 import androidx.room.TypeConverters;
 
 @Database(entities = {ListItemsEntity.class}, version = 1, exportSchema = false)
-//@TypeConverters(DateConverter.class)
+@TypeConverters(DateConverter.class)
 public abstract class AppDatabase extends RoomDatabase {
     private static final String LOG_TAG =AppDatabase.class
             .getSimpleName();

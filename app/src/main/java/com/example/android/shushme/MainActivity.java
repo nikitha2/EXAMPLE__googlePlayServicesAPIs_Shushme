@@ -4,36 +4,32 @@ package com.example.android.shushme;
 import android.Manifest;
 
 import com.example.android.shushme.mvvmArch.MainViewModel;
-import com.example.android.shushme.provider.PlaceContract;
 import com.example.android.shushme.room.ListItemsEntity;
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.GooglePlayServicesNotAvailableException;
-import com.google.android.gms.common.GooglePlayServicesRepairableException;
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.common.api.PendingResult;
-import com.google.android.gms.common.api.ResultCallback;
-import com.google.android.gms.common.api.internal.OnConnectionFailedListener;
-import com.google.android.gms.location.places.PlaceBuffer;
+import com.google.android.gms.common.api.Status;
+import com.google.android.gms.location.GeofencingClient;
 import com.google.android.gms.location.places.ui.PlacePicker;
 import com.google.android.libraries.places.api.model.Place;
 
-import android.app.Activity;
+import android.app.NotificationManager;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
-import android.database.Cursor;
 import android.location.Location;
-import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.CheckBox;
+import android.widget.CompoundButton;
+import android.widget.Switch;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProviders;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -48,7 +44,7 @@ import com.google.android.libraries.places.api.net.FetchPlaceRequest;
 import com.google.android.libraries.places.api.net.PlacesClient;
 import com.google.android.libraries.places.widget.Autocomplete;
 import com.google.android.libraries.places.widget.AutocompleteActivity;
-
+import com.google.android.libraries.places.widget.model.AutocompleteActivityMode;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -60,20 +56,28 @@ public class MainActivity extends AppCompatActivity implements ActivityCompat.On
     // Constants
     public static final String TAG = MainActivity.class.getSimpleName();
     private static final String REQUEST_CODE = "LOCATION_REQUEST_CODE";
+    public static final String API_KEY = "AIzaSyBULrgQ9hEpw9syljf-VToZ-sm-pHUxYxo";
+
     static final int  SERVICE_MISSING=1;
     static final int SERVICE_VERSION_UPDATE_REQUIRED=2;
     static final int  SERVICE_DISABLED=3;
     static final int PLACE_PICKER_REQUEST_CODE =4;
+    static final int AUTOCOMPLETE_REQUEST_CODE =5;
+    private static final int ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS =6 ;
+    Geofencing mGeofencing;
+
     // Member variables
     private PlaceListAdapter mAdapter;
     private RecyclerView mRecyclerView;
     CheckBox location;
+    Switch geofences;
     CheckBox ringtone;
     Button addNewLocation;
     PlacesClient placesClient;
     MainViewModel viewModel;
     List<ListItemsEntity> taskEntriesAll=new ArrayList<>();
-    private GoogleApiClient mClient;
+    GeofencingClient geofencingClient;
+    private boolean mIsEnabled;
 
     /**
      * Called when the activity is starting
@@ -84,6 +88,10 @@ public class MainActivity extends AppCompatActivity implements ActivityCompat.On
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        addNewLocation=findViewById(R.id.addNewLocation);
+        location=findViewById(R.id.enable_location);
+        ringtone=findViewById(R.id.ringer_permissions_checkbox);
+        geofences=findViewById(R.id.enable_switch);
 
         // Set up the recycler view
         mRecyclerView = (RecyclerView) findViewById(R.id.places_list_recycler_view);
@@ -103,11 +111,6 @@ public class MainActivity extends AppCompatActivity implements ActivityCompat.On
             }
         });
 
-
-        addNewLocation=findViewById(R.id.addNewLocation);
-        location=findViewById(R.id.enable_location);
-        ringtone=findViewById(R.id.enable_rington);
-
         addNewLocation.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -117,16 +120,31 @@ public class MainActivity extends AppCompatActivity implements ActivityCompat.On
 
         // Initialize the Places SDK
         if (!Places.isInitialized()) {
-            Places.initialize(this, String.valueOf(R.string.API_KEY));
+            Places.initialize(this, API_KEY);
         }
 
         // Create a new PlacesClient instance
         placesClient = Places.createClient(this);
+        geofencingClient = LocationServices.getGeofencingClient(this);
+        mGeofencing=new Geofencing(this,geofencingClient);
 
-//        viewModel.insertTasks(new ListItemsEntity( "placeID1", "placeName1", "placeAddress1") );
-//        viewModel.insertTasks(new ListItemsEntity( "placeID2", "placeName2", "placeAddress2") );
-//        viewModel.insertTasks(new ListItemsEntity( "placeID3", "placeName3", "placeAddress3") );
-//        viewModel.insertTasks(new ListItemsEntity( "placeID4", "placeName4", "placeAddress4") );
+
+        Switch onOffSwitch = (Switch) findViewById(R.id.enable_switch);
+        mIsEnabled = getPreferences(MODE_PRIVATE).getBoolean(getString(R.string.setting_enabled), false);
+        onOffSwitch.setChecked(mIsEnabled);
+        onOffSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                SharedPreferences.Editor editor = getPreferences(MODE_PRIVATE).edit();
+                editor.putBoolean(getString(R.string.setting_enabled), isChecked);
+                mIsEnabled = isChecked;
+                editor.commit();
+                if (isChecked) mGeofencing.registerAllGeofences();
+                else mGeofencing.unRegisterAllGeofences();
+            }
+
+        });
+
     }
 
     public void onAddNewLocation(View view){
@@ -135,20 +153,27 @@ public class MainActivity extends AppCompatActivity implements ActivityCompat.On
             Toast.makeText(this,R.string.location_permission_needed,Toast.LENGTH_LONG).show();
         }
         if (!Places.isInitialized()) {
-            Places.initialize(view.getContext(), String.valueOf(R.string.API_KEY));
+            Places.initialize(view.getContext(), API_KEY);
         }
 
         List<Place.Field> fields = Arrays.asList(Place.Field.ID, Place.Field.NAME);
         // Start the autocomplete intent.
         try {
-            PlacePicker.IntentBuilder builder = new PlacePicker.IntentBuilder();
-            Intent intent=builder.build((Activity) view.getContext());
-            startActivityForResult(intent, PLACE_PICKER_REQUEST_CODE);
-        } catch (GooglePlayServicesNotAvailableException e) {
-            e.printStackTrace();
-        } catch (GooglePlayServicesRepairableException e) {
+//            PlacePicker.IntentBuilder builder = new PlacePicker.IntentBuilder();
+//            Intent intent=builder.build(MainActivity.this);
+//             startActivityForResult(intent, PLACE_PICKER_REQUEST_CODE);
+
+            // Start the autocomplete intent.
+            Intent intent = new Autocomplete.IntentBuilder(AutocompleteActivityMode.FULLSCREEN, fields).build(this);
+            startActivityForResult(intent, AUTOCOMPLETE_REQUEST_CODE);
+        } catch (Exception e) {
             e.printStackTrace();
         }
+        // catch (GooglePlayServicesNotAvailableException e) {
+//            e.printStackTrace();
+//        } catch (GooglePlayServicesRepairableException e) {
+//            e.printStackTrace();
+//        }
 
     }
 
@@ -174,10 +199,14 @@ public class MainActivity extends AppCompatActivity implements ActivityCompat.On
             }
         });
 
-        ringtone.setOnClickListener(new View.OnClickListener() {
+
+
+        geofences.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-              //  AndroidPermissions.getAndroidPermissionringtone(this);
+                if(ActivityCompat.checkSelfPermission(view.getContext(), Manifest.permission.ACCESS_FINE_LOCATION)!= PackageManager.PERMISSION_GRANTED){
+                    AndroidPermissions.getAndroidPermissionLocation(view.getContext(),location);
+                }
             }
         });
 
@@ -201,34 +230,44 @@ public class MainActivity extends AppCompatActivity implements ActivityCompat.On
                         }
                     }
         });
+
+        CheckBox ringerPermissions = (CheckBox) findViewById(R.id.ringer_permissions_checkbox);
+        NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+        // Check if the API supports such permission change and check if permission is granted
+
+        if (android.os.Build.VERSION.SDK_INT >= 23 && !nm.isNotificationPolicyAccessGranted()) {
+            ringerPermissions.setChecked(false);
+
+        } else {
+            ringerPermissions.setChecked(true);
+            ringerPermissions.setEnabled(false);
+        }
+    }
+
+    public void onRingerPermissionsClicked(View view) {
+        Intent intent = new Intent(android.provider.Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS);
+        startActivity(intent);
     }
 
     @Override
-    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        if (requestCode == PLACE_PICKER_REQUEST_CODE) {
-            
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data){
+
+        if (requestCode == AUTOCOMPLETE_REQUEST_CODE) {
             if (resultCode == RESULT_OK) {
-                com.google.android.gms.location.places.Place place = PlacePicker.getPlace(this, data);
-
-                if(place==null){
-                    Log.i(TAG, String.valueOf(R.string.noPlaceSelected));
-                }else{
-                    Log.i(TAG, "Place: " + place.getName() + ", ID: " + place.getId());
-
-                    ListItemsEntity lie=new ListItemsEntity(place.getId());
-                    lie= refreshPlacesData(place.getId(),lie);
-                    Log.i(TAG, "3. Place ID|name|address: " + lie.getPlaceID()+" |"+lie.getPlaceName()+" | "+lie.getPlaceAddress());
-                    viewModel.insertTasks(lie);
-                }
-            }
-            else if (resultCode == AutocompleteActivity.RESULT_ERROR) {
+                Place place = Autocomplete.getPlaceFromIntent(data);
+                Log.i(TAG, "3. Place: " + place.getName() + ", " + place.getId());
+                ListItemsEntity lie=new ListItemsEntity(place.getId());
+                refreshPlacesData(place.getId(),lie);
+            } else if (resultCode == AutocompleteActivity.RESULT_ERROR) {
                 // TODO: Handle the error.
+                Status status = Autocomplete.getStatusFromIntent(data);
+                Log.i(TAG, status.getStatusMessage());
             } else if (resultCode == RESULT_CANCELED) {
                 // The user canceled the operation.
             }
-
             return;
         }
+
         super.onActivityResult(requestCode, resultCode, data);
     }
 
@@ -243,12 +282,9 @@ public class MainActivity extends AppCompatActivity implements ActivityCompat.On
                     // in your app.
 
                 }  else {
-                    // Explain to the user that the feature is unavailable because
-                    // the features requires a permission that the user has denied.
-                    // At the same time, respect the user's decision. Don't link to
-                    // system settings in an effort to convince the user to change
-                    // their decision.
-                   // Toast.makeText(this,R.string.location_permission_denied,Toast.LENGTH_LONG).show();
+                    // Explain to the user that the feature is unavailable because the features requires a permission that the user has denied.
+                    // At the same time, respect the user's decision. Don't link to system settings in an effort to convince the user to change
+                    // their decision.Toast.makeText(this,R.string.location_permission_denied,Toast.LENGTH_LONG).show();
                 }
                 return;
             default:   // Toast.makeText(this,R.string.location_permission_denied,Toast.LENGTH_LONG).show();
@@ -264,36 +300,50 @@ public class MainActivity extends AppCompatActivity implements ActivityCompat.On
 
     }
 
-    public ListItemsEntity refreshPlacesData(String id,ListItemsEntity listItemsEntity) {
-        final String placeId = id;
-
+    public void refreshPlacesData(String id,ListItemsEntity listItemsEntity) {
+        final String placeId =id;
+                //"ChIJvavNLritEmsRbFHX3aQcmJ4";
 // Specify the fields to return.
-        final List<Place.Field> placeFields = Arrays.asList(Place.Field.ADDRESS, Place.Field.NAME);
+        final List<Place.Field> placeFields = Arrays.asList(Place.Field.ADDRESS, Place.Field.NAME,Place.Field.LAT_LNG);
 
 // Construct a request object, passing the place ID and fields array.
         final FetchPlaceRequest request = FetchPlaceRequest.newInstance(placeId, placeFields);
 
-//        placesClient.fetchPlace(request).addOnSuccessListener((response) -> {
-//            Place place = response.getPlace();
-//            Log.i(TAG, "Place found: " + place.getName());
-//            listItemsEntity.setPlaceAddress(place.getAddress());
-//            listItemsEntity.setPlaceName(place.getName());
-//        }).addOnFailureListener((exception) -> {
-//            if (exception instanceof ApiException) {
-//                final ApiException apiException = (ApiException) exception;
-//                Log.e(TAG, "Place not found: " + exception.getMessage());
-//                final int statusCode = apiException.getStatusCode();
-//                // TODO: Handle error with given status code.
-//            }
-//        });
+        placesClient.fetchPlace(request).addOnSuccessListener((response) -> {
+            Place place = response.getPlace();
+            Log.i(TAG, "------------------ Place found: " + place.getName());
+            listItemsEntity.setPlaceAddress(place.getAddress());
+            listItemsEntity.setPlaceName(place.getName());
+            String result = String.valueOf(place.getLatLng().latitude).concat(" ").concat(String.valueOf(place.getLatLng().longitude));
+            listItemsEntity.setPlaceLAT_LNG(result);
+            viewModel.insertTasks(listItemsEntity);
 
-    //}
-        viewModel.fetchPlacesbyId(placeId);
+            viewModel.getTasks().observe(this, new Observer<List<ListItemsEntity>>() {
+                @Override
+                public void onChanged(List<ListItemsEntity> taskEntries) {
+                    mGeofencing.updateGeofencesList(taskEntries );
+                }
+            });
+
+
+            if (mIsEnabled)
+                mGeofencing.registerAllGeofences();
+        }).addOnFailureListener((exception) -> {
+            if (exception instanceof ApiException) {
+                final ApiException apiException = (ApiException) exception;
+                Log.e(TAG, "Place not found: " + exception.getMessage());
+                final int statusCode = apiException.getStatusCode();
+                // TODO: Handle error with given status code.
+            }
+        });
+
+  //  }
+       // viewModel.fetchPlacesbyId(placeId,viewModel);
         Log.i(TAG, "2. Place ID: " + listItemsEntity.getPlaceID());
         Log.i(TAG, "2. Place found: " + listItemsEntity.getPlaceName());
         Log.i(TAG, "2. Address found: " + listItemsEntity.getPlaceAddress());
 
-        return listItemsEntity;
+        //return listItemsEntity;
     }
 
 

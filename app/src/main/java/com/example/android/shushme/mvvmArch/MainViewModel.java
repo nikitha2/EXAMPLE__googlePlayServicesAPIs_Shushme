@@ -38,7 +38,7 @@ import java.util.List;
             tasksRepository.insertTasks(taskEntry);
         }
 
-        public void fetchPlacesbyId(String placeId) {
-            tasksRepository.fetchPlacesbyId(placeId);
+        public void fetchPlacesbyId(String placeId,MainViewModel viewModel) {
+            tasksRepository.fetchPlacesbyId(placeId,viewModel);
         }
     }

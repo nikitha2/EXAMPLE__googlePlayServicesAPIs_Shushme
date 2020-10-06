@@ -1,8 +1,6 @@
 package com.example.android.shushme.Retrofit;
 
-
 import com.example.android.shushme.room.ListItemsEntity;
-
 import java.util.List;
 
 public class ListItemsEntityResult {
