@@ -2,7 +2,6 @@ package com.example.android.shushme.mvvmArch;
 
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
-import Re
 import com.example.android.shushme.R;
 import com.example.android.shushme.room.AppDatabase;
 import com.example.android.shushme.room.ListItemsEntity;
@@ -10,6 +9,10 @@ import com.example.android.shushme.room.TaskDao;
 
 import java.util.List;
 import java.util.concurrent.ExecutorService;
+
+import retrofit2.Call;
+import com.example.android.shushme.Retrofit.;
+import retrofit2.Response;
 import retrofit2.Retrofit;
 
 public class TasksRepository {
@@ -53,22 +56,10 @@ public class TasksRepository {
 
     public void fetchPlacesbyId(String placeId) {
         Retrofit retrofit = RetrofitClientInstance.getRetrofitInstance();
-        GetMoviesByPopularityService service= retrofit.create(GetPlacesService.class);
-        Call<MoviesByPopularityList> call = service.getListItemsEntityById(placeId, R.string.API_KEY,R.string.ReturnFieldsFromAPI);
+        GetPlacesService service = retrofit.create(GetPlacesService.class);
+        Call<ListItemsEntity> call = service.getListItemsEntityById(placeId, String.valueOf(R.string.API_KEY),String.valueOf(R.string.ReturnFieldsFromAPI));
 
-        final MutableLiveData<List<MoviesDataEntity>> moviesByPopularity = new MutableLiveData<>();
-        call.enqueue(new Callback<MoviesByPopularityList>() {
-            @Override
-            public void onResponse(Call<MoviesByPopularityList> call, Response<MoviesByPopularityList> response) {
-                MoviesByPopularityList body = response.body();
-                moviesByPopularity.setValue(body.getResults());
-            }
-
-            @Override
-            public void onFailure(Call<MoviesByPopularityList> call, Throwable t) {
-                System.out.println("onFailure");
-                moviesByPopularity.setValue(null);
-            }
-        });
+        final MutableLiveData<ListItemsEntity> listItemsEntity = new MutableLiveData<>();
+        call.enqueue(new Callback<ListItemsEntityResult>());
     }
 }

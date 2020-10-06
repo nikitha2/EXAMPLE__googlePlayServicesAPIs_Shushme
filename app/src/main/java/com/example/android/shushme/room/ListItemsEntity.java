@@ -5,6 +5,8 @@ import androidx.room.Entity;
 import androidx.room.Ignore;
 import androidx.room.PrimaryKey;
 
+import java.util.List;
+
 @Entity(tableName = "places")
 public class ListItemsEntity {
 
@@ -13,8 +15,6 @@ public class ListItemsEntity {
     private String placeID;
     private String placeName;
     private String placeAddress;
-
-
     public ListItemsEntity(String placeID) {
         this.placeID = placeID;
     }
@@ -65,6 +65,7 @@ public class ListItemsEntity {
     public void setPlaceAddress(String placeAddress) {
         this.placeAddress = placeAddress;
     }
+
 
 
 }
